@@ -11,8 +11,15 @@ class Env(StrEnum):
 
 class Settings(BaseSettings):
     ENV: Env = Env.LOCAL
-    DB_HOST: str = "127.0.0.1"
-    DB_PORT: int = 3306
-    DB_USER: str = "hanswell"
-    DB_PASSWORD: str = "hanswell@2025"
-    DB_DB: str = "ICS-system"
+    DB_HOST: str
+    DB_PORT: int
+    DB_USER: str
+    DB_PASSWORD: str
+    DB_DB: str
+    DB_URL: str
+
+    class Config:
+        env_file = "envs/.env.local"
+
+
+settings = Settings()

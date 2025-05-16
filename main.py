@@ -1,16 +1,24 @@
-# This is a sample Python script.
+import os
 
-# Press ⌃R to execute it or replace it with your code.
-# Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
+from dotenv import load_dotenv
+from fastapi import FastAPI
+from tortoise.contrib.fastapi import register_tortoise
 
+load_dotenv(dotenv_path="envs/.env.local")
 
-def print_hi(name):
-    # Use a breakpoint in the code line below to debug your script.
-    print(f'Hi, {name}')  # Press ⌘F8 to toggle the breakpoint.
+DB_URL = os.getenv("DB_URL")
 
+app = FastAPI()
 
-# Press the green button in the gutter to run the script.
-if __name__ == '__main__':
-    print_hi('PyCharm')
+register_tortoise(
+    app,
+    db_url=DB_URL,
+    modules={"models": ["app.models.user_model"]},
+    generate_schemas=True,
+    add_exception_handlers=True,
+)
 
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
+# 라우터 등록
+from app.routers.user_router import router as user_router
+
+app.include_router(user_router)

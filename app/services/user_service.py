@@ -55,7 +55,15 @@ async def service_signup_user(data: UserSignupRequest) -> UserSignupResponse:
 
 # 사용자 정보 조회
 async def service_get_user(user_id: int) -> UserGetResponse:
-    return await service_get_user(user_id)
+    user = await User.get(id=user_id)
+    if not user:
+        raise HTTPException(status_code = status.HTTP_404_NOT_FOUND, detail = "사용자를 찾을 수 없습니다.")
+    return UserGetResponse(
+        user_id=user.id,
+        username=user.username,
+        full_name=user.full_name,
+        email=user.email,
+    )
 
 
 # 로그인

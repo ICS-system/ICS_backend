@@ -12,6 +12,7 @@ from app.dtos.live.live_response import (
 )
 from fastapi import HTTPException, status
 import requests
+from datetime import datetime
 
 
 async def service_start_stream(user_id: int, data: LiveStreamCreateRequest):
@@ -21,11 +22,8 @@ async def service_start_stream(user_id: int, data: LiveStreamCreateRequest):
 
         existing_stream = await LiveModel.filter(user_id=user_id, is_active=True).first()
         if existing_stream:
-            print(f"기존 스트림 발견: {existing_stream}")
-            raise HTTPException (
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="이미 활성 스트림이 있습니다."
-            )
+            print(f"기존 스트림 종료: {existing_stream}")
+            await LiveModel.filter(user_id=user_id, is_active=True).delete()
 
         used_channels = await LiveModel.filter(is_active=True).values_list("channel_number", flat=True)
         used_set = set(used_channels)
@@ -42,7 +40,7 @@ async def service_start_stream(user_id: int, data: LiveStreamCreateRequest):
                 detail="모든 채널이 사용 중 입니다."
             )
 
-        janus_room_id = 1000 + channel_number
+        janus_room_id = 1001
 
         live_stream = await LiveModel.create(
             user=user,
@@ -84,32 +82,47 @@ async def service_start_stream(user_id: int, data: LiveStreamCreateRequest):
             detail=f"스트림 시작 실패: {str(e)}"
         )
 
-# async def service_stop_stream(user_id: int) -> StreamStopResponse:
-#     """라이브 스트림 종료"""
-#     live_stream = await LiveModel.filter(user_id=user_id, is_active=True).first()
-#
-#     if not live_stream:
-#         raise HTTPException(
-#             status_code=status.HTTP_404_NOT_FOUND,
-#             detail="항상 스트림을 찾을 수 없습니다"
-#         )
-
 async def service_stop_stream(user_id: int):
+    """라이브 스트림 종료"""
     try:
-        return {"success": True, "message": "종료 성공"}
+        live_stream = await LiveModel.filter(user_id=user_id, is_active=True).first()
+
+        if not live_stream:
+            return {"success": False, "message": "활성 스트림이 없습니다."}
+
+        # 스트림 종료
+        live_stream.is_active = False
+        live_stream.ended_at = datetime.now()
+        await live_stream.save()
+
+        return StreamStopResponse(
+            success=True,
+            message="스트림이 종료되었습니다.",
+            duration=live_stream.duration or 0,
+        )
+
+        return {
+            "success": True,
+            "message": "스트림이 종료되었습니다.",
+        }
     except Exception as e:
         print(f"Stop 에러: {e}")
-        return {"success": False, "message": "종료 실패"}
+        return {"success": False, "message": f"종료 실패: {str(e)}"}
 
+async def get_available_room_id() -> int:
+    """사용 가능한 room_id 찾기"""
+    used_room_ids = await LiveModel.all().values_list("janus_room_id", flat=True)
+    used_set = set(used_room_ids)
 
-    # 스트림 종료
-    await live_stream.stop_stream()
-
-    return StreamStopResponse(
-        success=True,
-        message="스트림이 종료되었습니다.",
-        duration=live_stream.duration or 0,
-    )
+    room_id = 1001
+    while room_id in used_set:
+        room_id += 1
+        if room_id > 9999:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="사용 가능한 room_id가 없음"
+            )
+        return room_id
 
 async def service_get_all_channels() -> AllChannelResponse:
     """전체 채널 정보 조회 -> 관리자용 16채널 모니터링"""

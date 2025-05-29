@@ -1,7 +1,10 @@
+from string import ascii_lowercase
+
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
+from jose import JWTError, jwt
 
-from app.core.auth import create_access_token, get_current_user
+from app.core.auth import create_access_token, get_current_user, oauth2_scheme, ALGORITHM, SECRET_KEY
 from app.dtos.user.user_login_request import UserLoginRequest
 from app.dtos.user.user_login_response import UserLoginResponse
 from app.dtos.user.user_password_reset_request import (
@@ -34,6 +37,16 @@ async def router_signup_user(data: UserSignupRequest) -> UserSignupResponse:
     return await service_signup_user(data)
 
 
+@router.get("/me", response_model=UserGetResponse)
+async def get_current_user_me(current_user: User = Depends(get_current_user)) -> UserGetResponse:
+    """
+    현재 인증된 사용자 정보를 반환합니다.
+    이미 get_current_user 함수가 있으므로 이를 활용하는 것이 좋습니다.
+    """
+
+    return UserGetResponse.model_validate(current_user)
+
+
 @router.get("/{user_id}", response_model=UserGetResponse)
 async def router_get_user(
     user_id: int,
@@ -60,7 +73,13 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
             detail="아이디 혹은 비밀번호가 다릅니다.",
         )
     access_token = create_access_token(data={"sub": user.username})
-    return {"access_token": access_token, "token_type": "bearer"}
+    return {
+        "access_token": access_token,
+        "token_type": "bearer",
+        "username": user.username,
+        "full_name": user.full_name,
+        "email": user.email,
+    }
 
 
 @router.post("/change-password", response_model=UserPasswordChangeResponse)
@@ -69,9 +88,13 @@ async def router_change_password(
 ) -> UserPasswordChangeResponse:
     return await service_change_password(current_user.id, data)
 
-
-@router.post("/update-profile")
+@router.patch("/update-profile")
 async def update_profile(
     data: UserProfileUpdateRequest, current_user: User = Depends(get_current_user)
 ) -> dict[str, str]:
+    if data.full_name is not None:
+        current_user.full_name = data.full_name
+    if data.email is not None:
+        current_user.email = data.email
+    await current_user.save()
     return await service_update_profile(current_user.id, data)

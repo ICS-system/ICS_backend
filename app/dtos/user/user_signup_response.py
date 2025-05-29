@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.models.user_model import User
 
@@ -20,16 +20,12 @@ async def to_user_signup_response(user: User) -> UserSignupResponse:
 
 
 class UserGetResponse(BaseModel):
-    user_id: int
+    id: int
     username: str
     full_name: str
     email: str
 
+    model_config = ConfigDict(from_attributes=True)
 
 async def to_user_get_response(user: User) -> UserGetResponse:
-    return UserGetResponse(
-        user_id=user.id,
-        username=user.username,
-        full_name=user.full_name,
-        email=user.email,
-    )
+    return UserGetResponse.from_orm(user)

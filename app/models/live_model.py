@@ -10,7 +10,7 @@ class LiveModel(BaseModel, models.Model):  # type: ignore
     username = fields.CharField(max_length=50, index=True, description="스트리머 사용자명")
     full_name = fields.CharField(max_length=100, description="스트리머 실명")
     channel_number = fields.IntField(index=True, description="채널 번호 (1-16)")
-    janus_room_id = fields.IntField(unique=True, description="Janus room ID")
+    janus_room_id = fields.IntField(description="Janus room ID")
 
     stream_category = fields.CharField(max_length=50, default="일반")
     stream_title = fields.CharField(max_length=200, default="라이브 스트림", description="스트림 제목")
@@ -37,6 +37,7 @@ class LiveModel(BaseModel, models.Model):  # type: ignore
             ("started_at",)
         ]
         ordering = ["-started_at"]
+        unique_together = ("user", "is_active")
 
     def __str__(self) -> str:
         return f"Live(id={self.id}, user={self.username}, channel={self.channel_number})"

@@ -79,7 +79,7 @@ async def router_start_stream(
     """라이브 스트림 시작"""
     return await service_start_stream(current_user.id, data)
 
-@router.post("/stop", response_model=StreamStopResponse)
+@router.post("/stop")
 async def router_stop_stream(
         current_user: User = Depends(get_current_user),
 ):

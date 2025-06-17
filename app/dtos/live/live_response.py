@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
-from typing import List
+from typing import List, Optional
 
 
 class LiveStreamResponse(BaseModel):
@@ -13,15 +13,15 @@ class LiveStreamResponse(BaseModel):
     janus_room_id: int
     stream_category: str
     stream_title: str
-    stream_description: str
+    stream_description: Optional[str] = None
     tags: List[str]
-    thumbnail_url: str
+    thumbnail_url: Optional[str]
     is_public: bool
     quality_setting: str
     is_active: bool
     started_at: datetime
-    ended_at: datetime
-    duration: int
+    ended_at: Optional[datetime] = None
+    duration: Optional[int] = None
     created_at: datetime
     modified_at: datetime
 
@@ -33,7 +33,7 @@ class ChannelInfo(BaseModel):
     """채널 정보"""
     channel_number: int
     is_active: bool
-    stream_info: LiveStreamResponse
+    stream_info: Optional[LiveStreamResponse] = None
 
 
 class AllChannelResponse(BaseModel):

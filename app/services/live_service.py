@@ -12,7 +12,7 @@ from app.dtos.live.live_response import (
 )
 from fastapi import HTTPException, status
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 async def service_start_stream(user_id: int, data: LiveStreamCreateRequest):
@@ -40,7 +40,9 @@ async def service_start_stream(user_id: int, data: LiveStreamCreateRequest):
                 detail="모든 채널이 사용 중 입니다."
             )
 
-        janus_room_id = 1001
+        # janus_room_id = 1001
+        janus_room_id = await get_available_room_id()
+        print(f"할당된 room_id: {janus_room_id}")
 
         live_stream = await LiveModel.create(
             user=user,
@@ -92,7 +94,7 @@ async def service_stop_stream(user_id: int):
 
         # 스트림 종료
         live_stream.is_active = False
-        live_stream.ended_at = datetime.now()
+        live_stream.ended_at = datetime.now(timezone.utc)
         await live_stream.save()
 
         return StreamStopResponse(
@@ -109,43 +111,66 @@ async def service_stop_stream(user_id: int):
         print(f"Stop 에러: {e}")
         return {"success": False, "message": f"종료 실패: {str(e)}"}
 
+
 async def get_available_room_id() -> int:
     """사용 가능한 room_id 찾기"""
     used_room_ids = await LiveModel.all().values_list("janus_room_id", flat=True)
     used_set = set(used_room_ids)
 
-    room_id = 1001
-    while room_id in used_set:
-        room_id += 1
-        if room_id > 9999:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="사용 가능한 room_id가 없음"
-            )
-        return room_id
+    for room_id in range(1001, 10000):
+        if room_id not in used_set:
+            return room_id
+
 
 async def service_get_all_channels() -> AllChannelResponse:
     """전체 채널 정보 조회 -> 관리자용 16채널 모니터링"""
-    active_streams = await LiveModel.filter(is_active=True).all()
+    try:
+        active_streams = await LiveModel.filter(is_active=True).all()
 
-    channel_map = {stream.channel_number: stream for stream in active_streams}
+        channel_map = {stream.channel_number: stream for stream in active_streams}
 
-    channels = []
-    for i in range(1, 17):
-        stream = channel_map.get(i)
-        channel_info = ChannelInfo(
-            channel_number=i,
-            is_active=bool(stream.is_active),
-            stream_info=LiveStreamResponse.model_validate(stream) if stream
-            else None,
+        channels = []
+        for i in range(1, 17):
+            stream = channel_map.get(i)
+
+            try:
+                if stream:
+                    stream_info = LiveStreamResponse.model_validate(stream)
+
+                    channel_info = ChannelInfo(
+                        channel_number=i,
+                        is_active=True,
+                        stream_info=stream_info,
+                    )
+                else:
+                    channel_info = ChannelInfo(
+                        channel_number=i,
+                        is_active=False,
+                        stream_info=None,
+                    )
+
+            except Exception as e:
+                print(f"채널 {i} 처리 중 오류: {e}")
+                channel_info = ChannelInfo(
+                    channel_number=i,
+                    is_active=False,
+                    stream_info=None,
+                )
+
+            channels.append(channel_info)
+
+        return AllChannelResponse(
+            channels=channels,
+            total_channels=16,
+            active_channels=len(active_streams),
         )
-        channels.append(channel_info)
 
-    return AllChannelResponse(
-        channels=channels,
-        total_channels=16,
-        active_channels=len(active_streams),
-    )
+    except Exception as e:
+        print(f"service_get_all_channels 전체 오류: {e}")
+        import traceback
+        traceback.print_exc()
+        raise
+
 
 # 공개 스트림 조회 => 추후
 # 카테고리별 스트림 조회 => 추후
@@ -155,6 +180,7 @@ async def service_get_stream_by_channel(channel_number: int) -> LiveStreamRespon
     if channel_number < 1 or channel_number > 16:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
+            detail="잘못된 채널 번호입니다."
         )
 
     live_stream = await LiveModel.filter(

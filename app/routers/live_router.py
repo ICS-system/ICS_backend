@@ -25,8 +25,6 @@ from app.services.live_service import (
 router = APIRouter(prefix="/v1/live", tags=["live"], redirect_slashes=False)
 
 
-# ========== RESTful 스트림 관리 (새로 추가) ==========
-
 @router.post("/streams", response_model=StreamStartResponse)
 async def create_stream(
         data: LiveStreamCreateRequest,

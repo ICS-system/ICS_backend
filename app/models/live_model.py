@@ -1,7 +1,7 @@
 from tortoise import fields, models
 from app.models.base_model import BaseModel
 from typing import Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 class LiveModel(BaseModel, models.Model):  # type: ignore
@@ -96,5 +96,6 @@ class LiveModel(BaseModel, models.Model):  # type: ignore
         if self.ended_at:
             return int((self.ended_at - self.started_at).total_seconds())
         elif self.is_active:
-            return int((datetime.now() - self.started_at).total_seconds())
+            now_utc = datetime.now(timezone.utc)
+            return int((now_utc - self.started_at).total_seconds())
         return None

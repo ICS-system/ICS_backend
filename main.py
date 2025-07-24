@@ -7,6 +7,7 @@ from starlette.responses import JSONResponse
 from tortoise.contrib.fastapi import register_tortoise
 from fastapi.middleware.cors import CORSMiddleware
 
+
 load_dotenv(dotenv_path="envs/.env.local")
 
 DB_URL = os.getenv("DB_URL")
@@ -30,7 +31,12 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 # CORS 미들웨어 관리
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=[
+        "https://192.168.0.151:5173",
+        "https://localhost:5173",
+        "http://192.168.0.151:5173",
+        "http://localhost:5173",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

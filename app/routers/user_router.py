@@ -79,6 +79,7 @@ async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends(
         "username": user.username,
         "full_name": user.full_name,
         "email": user.email,
+        "role": user.role,
     }
 
 
@@ -98,3 +99,24 @@ async def update_profile(
         current_user.email = data.email
     await current_user.save()
     return await service_update_profile(current_user.id, data)
+
+
+@router.put("/{username}/set-admin", tags=["Admin"])
+async def set_user_as_admin(
+        username: str,
+        # Tortoise ORM은 Session이나 get_db를 일반적으로 사용하지 않습니다.
+        # 모델을 직접 쿼리합니다.
+):
+    """
+    개발/테스트용: 특정 사용자의 역할을 'admin'으로 설정.
+    주의: 실제 운영 시에는 이 엔드포인트에 관리자 인증/권한 체크를 반드시 추가해야 함.
+    """
+    db_user = await User.get_or_none(username=username)  # Tortoise ORM의 조회 방식
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+
+    # 사용자의 role 필드를 'admin'으로 변경
+    db_user.role = "admin"
+    await db_user.save()
+
+    return {"message": f"User {username} is now an admin. New role: {db_user.role}"}

@@ -9,7 +9,6 @@ class Env(StrEnum):
     STAGE = "stage"
     PROD = "prod"
 
-
 class Settings(BaseSettings):
     ENV: Env = Env.LOCAL
     DB_HOST: str
@@ -17,6 +16,11 @@ class Settings(BaseSettings):
     DB_USER: str
     DB_PASSWORD: str
     DB_DB: str
+
+    MAIL_USERNAME: str
+    MAIL_PASSWORD: str
+    MAIL_SERVER: str
+    MAIL_FROM: str
 
     class Config:
         env_file = os.environ.get("ENV_FILE", "envs/.env.local")

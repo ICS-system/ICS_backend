@@ -1,6 +1,7 @@
 import os
 
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema
+from app.configs import settings
 
 conf = ConnectionConfig(
     MAIL_USERNAME=os.getenv("MAIL_USERNAME"),

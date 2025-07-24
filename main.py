@@ -6,6 +6,7 @@ from fastapi.exceptions import RequestValidationError
 from starlette.responses import JSONResponse
 from tortoise.contrib.fastapi import register_tortoise
 from fastapi.middleware.cors import CORSMiddleware
+from app.configs.database_settings import TORTOISE_ORM
 
 
 load_dotenv(dotenv_path="envs/.env.local")
@@ -45,8 +46,7 @@ app.add_middleware(
 # tortoise orm 관리
 register_tortoise(
     app,
-    db_url=DB_URL,
-    modules={"models": ["app.models.user_model", "app.models.live_model"]},
+    config=TORTOISE_ORM,
     generate_schemas=True,
     add_exception_handlers=True,
 )

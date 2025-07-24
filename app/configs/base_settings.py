@@ -16,11 +16,7 @@ class Settings(BaseSettings):
     DB_USER: str
     DB_PASSWORD: str
     DB_DB: str
-    DB_URL: str
 
     class Config:
-        env_file = "envs/.env.local"
-        extra = "allow"
-
-
+        env_file = os.environ.get("ENV_FILE", "envs/.env.local")
 settings = Settings()

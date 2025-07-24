@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import Optional
 
-from app.core.auth import get_current_user
+from app.core.auth import get_current_user, require_admin, require_streamer, require_any_user
 from app.dtos.live.live_request import (
     LiveStreamCreateRequest,
     LiveStreamUpdateRequest,
@@ -25,26 +25,33 @@ from app.services.live_service import (
 router = APIRouter(prefix="/v1/live", tags=["live"], redirect_slashes=False)
 
 
-@router.post("/streams", response_model=StreamStartResponse)
+@router.post("/streams", response_model=StreamStartResponse, dependencies=[Depends(require_streamer)])
 async def create_stream(
         data: LiveStreamCreateRequest,
-        current_user: User = Depends(get_current_user),
+        current_user: User = Depends(require_streamer),
 ) -> StreamStartResponse:
     """스트림 생성"""
     return await service_start_stream(current_user.id, data)
 
 @router.delete("/streams/current", response_model=StreamStopResponse)
 async def delete_current_stream(
-        current_user: User = Depends(get_current_user),
+        current_user: User = Depends(require_streamer),
 ) -> StreamStopResponse:
     """현재 사용자의 활성 스트림 삭제"""
     return await service_stop_stream(current_user.id)
 
 
-@router.get("/channels", response_model=AllChannelResponse)
-async def list_channels() -> AllChannelResponse:
+@router.get("/channels", response_model=AllChannelResponse, dependencies=[Depends(require_any_user)])
+async def list_channels(current_user = Depends(require_any_user)) -> AllChannelResponse:
     """전체 채널 목록"""
     return await service_get_all_channels()
+
+
+@router.get("/admin/channels", dependencies=[Depends(require_admin)])
+async def get_all_channels_admin(current_user = Depends(require_admin)) -> AllChannelResponse:
+    """관리자 전용: 전체 채널 모니터링"""
+    return await service_get_all_channels()
+
 
 @router.get("/channels/{channel_number}", response_model=LiveStreamResponse)
 async def get_channel(channel_number: int) -> LiveStreamResponse:
@@ -72,14 +79,14 @@ async def list_streams(
 @router.post("/start")
 async def router_start_stream(
         data: LiveStreamCreateRequest,
-        current_user: User = Depends(get_current_user),
+        current_user: User = Depends(require_streamer),
 ):
     """라이브 스트림 시작"""
     return await service_start_stream(current_user.id, data)
 
 @router.post("/stop")
 async def router_stop_stream(
-        current_user: User = Depends(get_current_user),
+        current_user: User = Depends(require_streamer),
 ):
     """라이브 스트림 종료"""
     return await service_stop_stream(current_user.id)

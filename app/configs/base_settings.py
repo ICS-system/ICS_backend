@@ -18,6 +18,17 @@ class Settings(BaseSettings):
     DB_DB: str
     DB_URL: str
 
+    # JWT 설정
+    SECRET_KEY: str
+
+    # 메일 설정
+    MAIL_USERNAME: str
+    MAIL_PASSWORD: str
+    MAIL_FROM: str
+    MAIL_PORT: int
+    MAIL_SERVER: str
+    MAIL_FROM_NAME: str
+
     class Config:
         env_file = "envs/.env.local"
         extra = "allow"

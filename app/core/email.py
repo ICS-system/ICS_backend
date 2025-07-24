@@ -4,12 +4,12 @@ from fastapi_mail import ConnectionConfig, FastMail, MessageSchema
 from app.configs import settings
 
 conf = ConnectionConfig(
-    MAIL_USERNAME=os.getenv("MAIL_USERNAME"),
-    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD"),
-    MAIL_FROM=os.getenv("MAIL_FROM"),
-    MAIL_PORT=int(os.getenv("MAIL_PORT") or 587),
-    MAIL_SERVER=os.getenv("MAIL_SERVER"),
-    MAIL_FROM_NAME=os.getenv("MAIL_FROM_NAME"),
+    MAIL_USERNAME=settings.MAIL_USERNAME,
+    MAIL_PASSWORD=settings.MAIL_PASSWORD,
+    MAIL_FROM=settings.MAIL_FROM,
+    MAIL_PORT=settings.MAIL_PORT,
+    MAIL_SERVER=settings.MAIL_SERVER,
+    MAIL_FROM_NAME=settings.MAIL_FROM_NAME,
     MAIL_STARTTLS=True,
     MAIL_SSL_TLS=False,
     VALIDATE_CERTS=True,

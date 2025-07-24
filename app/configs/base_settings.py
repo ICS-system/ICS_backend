@@ -17,6 +17,16 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
     DB_DB: str
 
+<<<<<<< HEAD
+    MAIL_USERNAME: str
+    MAIL_PASSWORD: str
+    MAIL_SERVER: str
+    MAIL_FROM: str
+
+    class Config:
+        env_file = os.environ.get("ENV_FILE", "envs/.env.local")
+settings = Settings()
+=======
     SECRET_KEY: str
 
     MAIL_USERNAME: str
@@ -30,3 +40,4 @@ class Settings(BaseSettings):
         env_file = os.environ.get("ENV_FILE") or "envs/.env.local"
 
 settings = Settings()
+>>>>>>> d05283fa0f218ed7ea915d65f120aa9ebf987a4a

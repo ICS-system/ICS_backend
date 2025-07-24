@@ -1,3 +1,4 @@
+import os
 from enum import StrEnum
 
 from pydantic_settings import BaseSettings
@@ -8,6 +9,16 @@ class Env(StrEnum):
     STAGE = "stage"
     PROD = "prod"
 
+env = os.getenv("ENV", "local").lower()
+
+# 환경에 맞는 .env 경로 매핑
+env_path_map = {
+    "local": "envs/.env.local",
+    "stage": "envs/.env.stage",
+    "prod": "envs/.env.prod",
+}
+
+env_file_path = env_path_map.get(env, "envs/.env.local")
 
 class Settings(BaseSettings):
     ENV: Env = Env.LOCAL
@@ -30,7 +41,7 @@ class Settings(BaseSettings):
     MAIL_FROM_NAME: str
 
     class Config:
-        env_file = "envs/.env.local"
+        env_file = env_file_path
         extra = "allow"
 
 

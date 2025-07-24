@@ -1,7 +1,7 @@
 import os
 from enum import StrEnum
 
-from pydantic_settings import BaseSettings, SettingsConfigDict
+from pydantic_settings import BaseSettings
 
 
 class Env(StrEnum):
@@ -27,8 +27,6 @@ class Settings(BaseSettings):
     MAIL_FROM_NAME: str
 
     class Config:
-        extra = "allow"
+        env_file = os.environ.get("ENV_FILE") or "envs/.env.local"
 
-env_file_path = os.environ.get("ENV_FILE", "envs/.env.local")
-print(f"✅ env_file_path: {env_file_path}")
-settings = Settings(_env_file=env_file_path)
+settings = Settings()

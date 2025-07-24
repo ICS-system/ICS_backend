@@ -17,6 +17,8 @@ class Settings(BaseSettings):
     DB_PASSWORD: str
     DB_DB: str
 
+    SECRET_KEY: str
+
     MAIL_USERNAME: str
     MAIL_PASSWORD: str
     MAIL_FROM: str

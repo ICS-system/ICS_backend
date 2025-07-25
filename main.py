@@ -1,4 +1,5 @@
 import os
+print("🔥 ENV_FILE:", os.environ.get("ENV_FILE"))
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, status
@@ -37,6 +38,7 @@ app.add_middleware(
         "https://localhost:5173",
         "http://192.168.0.151:5173",
         "http://localhost:5173",
+        "http://3.34.75.129",
     ],
     allow_credentials=True,
     allow_methods=["*"],
@@ -55,5 +57,5 @@ register_tortoise(
 from app.routers.user_router import router as user_router
 from app.routers.live_router import router as live_router
 
-app.include_router(user_router)
-app.include_router(live_router)
+app.include_router(user_router, prefix="/api")
+app.include_router(live_router, prefix="/api")

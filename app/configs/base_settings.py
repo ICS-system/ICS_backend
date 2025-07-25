@@ -28,6 +28,7 @@ class Settings(BaseSettings):
 
 
     class Config:
-        env_file = os.environ.get("ENV_FILE") or "envs/.env.local"
+        env_file = os.environ.get("ENV_FILE") or "/home/ubuntu/ever_real/backend/envs/.env.local"
+        env_file_encoding = 'utf-8'
 
 settings = Settings()

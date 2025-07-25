@@ -1,5 +1,4 @@
 import os
-print("🔥 ENV_FILE:", os.environ.get("ENV_FILE"))
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, status

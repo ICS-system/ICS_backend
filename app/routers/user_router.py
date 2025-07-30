@@ -29,7 +29,7 @@ from app.services.user_service import (
     service_update_profile,
 )
 
-router = APIRouter(prefix="/v1/users", tags=["User"], redirect_slashes=False)
+router = APIRouter(tags=["User"], redirect_slashes=False)
 
 
 @router.post("/signup", response_model=UserSignupResponse)

@@ -1,10 +1,12 @@
+version: '3.8'
+
 services:
-  janus-gateway:
-    image: sucwangsr/janus-webrtc-gateway-docker:1.2.1-arm64
+  janus:
+    image: canyan/janus-gateway:latest
     network_mode: host
     volumes:
-      - ~/janus-conf:/usr/local/etc/janus
-    container_name: janus-gateway
+      - ~/janus-config:/usr/local/etc/janus
+      - ~/janus-certs:/usr/local/share/janus/certs
+    container_name: janus
     restart: unless-stopped
-    environment:
-      - G_SLICE=always-malloc
+

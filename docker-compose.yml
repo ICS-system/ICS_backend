@@ -5,8 +5,7 @@ services:
     image: canyan/janus-gateway:latest
     network_mode: host
     volumes:
-      - ~/janus-config:/usr/local/etc/janus
-      - ~/janus-certs:/usr/local/share/janus/certs
+      - /home/ubuntu/janus-config:/usr/local/etc/janus
+      - /home/ubuntu/janus-certs:/usr/local/share/janus/certs
     container_name: janus
     restart: unless-stopped
-

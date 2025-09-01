@@ -229,3 +229,21 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+
+nginx.conf
+apache.conf
+
+# SSL certicicates
+*.crt
+*.key
+*.pem
+*.p12
+
+# Docker override files
+docker-compose.override.yml
+.dockerignore
+
+# OS specific
+Thumbs.db
+ehthumbs.db
+

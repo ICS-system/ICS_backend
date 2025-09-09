@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from jose import JWTError, jwt
 
-from app.core.auth import create_access_token, get_current_user, oauth2_scheme, ALGORITHM, SECRET_KEY
+from app.core.auth import create_access_token, get_current_user, oauth2_scheme, ALGORITHM, SECRET_KEY, require_admin
 from app.dtos.user.user_login_request import UserLoginRequest
 from app.dtos.user.user_login_response import UserLoginResponse
 from app.dtos.user.user_password_reset_request import (
@@ -17,7 +17,9 @@ from app.dtos.user.user_password_reset_response import (
 )
 from app.dtos.user.user_profile_update_request import UserProfileUpdateRequest
 from app.dtos.user.user_signup_request import UserSignupRequest
-from app.dtos.user.user_signup_response import UserGetResponse, UserSignupResponse
+from app.dtos.user.user_signup_response import UserGetResponse, UserSignupResponse, StreamerListItem, StreamerListResponse
+from app.dtos.user.admin_user_add_request import AdminUserAddRequest
+from app.dtos.user.admin_user_update_channel_request import AdminUserUpdateRequest
 from app.models.user_model import User
 from app.services.user_service import (
     authenticate_user,
@@ -27,14 +29,19 @@ from app.services.user_service import (
     service_reset_password,
     service_signup_user,
     service_update_profile,
+    service_admin_add_user,
+    service_admin_delete_user,
+    service_admin_update_user,
+    service_admin_list_streamers,
 )
 
 router = APIRouter(tags=["User"], redirect_slashes=False)
 
 
-@router.post("/signup", response_model=UserSignupResponse)
-async def router_signup_user(data: UserSignupRequest) -> UserSignupResponse:
-    return await service_signup_user(data)
+# Admin 전용 사용자 생성 API (정적 채널 부여, 이메일 없이 지정)
+@router.post("/add_user", response_model=UserSignupResponse, tags=["Admin"], dependencies=[Depends(require_admin)])
+async def admin_add_user(data: AdminUserAddRequest) -> UserSignupResponse:
+    return await service_admin_add_user(data)
 
 
 @router.get("/me", response_model=UserGetResponse)
@@ -101,22 +108,34 @@ async def update_profile(
     return await service_update_profile(current_user.id, data)
 
 
-@router.put("/{username}/set-admin", tags=["Admin"])
-async def set_user_as_admin(
-        username: str,
-        # Tortoise ORM은 Session이나 get_db를 일반적으로 사용하지 않습니다.
-        # 모델을 직접 쿼리합니다.
-):
+@router.put("/{username}/set-admin", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def set_user_as_admin(username: str):
     """
     개발/테스트용: 특정 사용자의 역할을 'admin'으로 설정.
-    주의: 실제 운영 시에는 이 엔드포인트에 관리자 인증/권한 체크를 반드시 추가해야 함.
     """
-    db_user = await User.get_or_none(username=username)  # Tortoise ORM의 조회 방식
+    db_user = await User.get_or_none(username=username)
     if not db_user:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
-    # 사용자의 role 필드를 'admin'으로 변경
     db_user.role = "admin"
     await db_user.save()
 
     return {"message": f"User {username} is now an admin. New role: {db_user.role}"}
+
+
+# Admin: 사용자 삭제
+@router.delete("/{username}", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def admin_delete_user(username: str) -> dict[str, str]:
+    return await service_admin_delete_user(username)
+
+
+# Admin: 사용자 정보 변경 (이름/소속/채널/비밀번호)
+@router.patch("/{username}", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def admin_update_user(username: str, data: AdminUserUpdateRequest) -> dict[str, str]:
+    return await service_admin_update_user(username, data)
+
+
+# Admin: 스트리머 목록 조회 (채널/소속/이름 포함)
+@router.get("/streamers", response_model=StreamerListResponse, tags=["Admin"], dependencies=[Depends(require_admin)])
+async def admin_list_streamers() -> StreamerListResponse:
+    return await service_admin_list_streamers()

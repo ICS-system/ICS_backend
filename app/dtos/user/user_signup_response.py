@@ -8,6 +8,8 @@ class UserSignupResponse(BaseModel):
     username: str
     full_name: str
     email: str
+    affiliation: str | None = None
+    channel_number: int | None = None
 
 
 async def to_user_signup_response(user: User) -> UserSignupResponse:
@@ -16,6 +18,8 @@ async def to_user_signup_response(user: User) -> UserSignupResponse:
         username=user.username,
         full_name=user.full_name,
         email=user.email,
+        affiliation=user.affiliation,
+        channel_number=user.channel_number,
     )
 
 
@@ -24,8 +28,24 @@ class UserGetResponse(BaseModel):
     username: str
     full_name: str
     email: str
+    affiliation: str | None = None
+    channel_number: int | None = None
+    modified_at: str | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
 async def to_user_get_response(user: User) -> UserGetResponse:
-    return UserGetResponse.from_orm(user)
+    resp = UserGetResponse.from_orm(user)
+    resp.modified_at = user.modified_at.isoformat() if getattr(user, "modified_at", None) else None
+    return resp
+
+
+class StreamerListItem(BaseModel):
+    username: str
+    full_name: str
+    affiliation: str | None = None
+    channel_number: int | None = None
+
+
+class StreamerListResponse(BaseModel):
+    items: list[StreamerListItem]

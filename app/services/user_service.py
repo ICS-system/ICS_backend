@@ -19,7 +19,7 @@ from app.dtos.user.user_password_reset_response import (
 from app.dtos.user.user_profile_update_request import UserProfileUpdateRequest
 from app.dtos.user.user_profile_update_response import UserProfileUpdateResponse
 from app.dtos.user.user_signup_request import UserSignupRequest
-from app.dtos.user.user_signup_response import UserGetResponse, UserSignupResponse, StreamerListItem, StreamerListResponse
+from app.dtos.user.user_signup_response import UserGetResponse, UserSignupResponse, StreamerListItem, StreamerListResponse, UserListItem, UserListResponse
 from app.models.user_model import User
 from app.dtos.user.admin_user_add_request import AdminUserAddRequest
 from app.dtos.user.admin_user_update_channel_request import AdminUserUpdateRequest
@@ -54,8 +54,9 @@ async def service_signup_user(data: UserSignupRequest) -> UserSignupResponse:
         username=user.username,
         full_name=user.full_name,
         email=user.email,
-        affiliation=user.affiliation,
-        channel_number=user.channel_number,
+        # TODO: 마이그레이션 완료 후 활성화
+        affiliation=getattr(user, 'affiliation', None),
+        channel_number=getattr(user, 'channel_number', None),
     )
 
 
@@ -69,8 +70,9 @@ async def service_get_user(user_id: int) -> UserGetResponse:
         username=user.username,
         full_name=user.full_name,
         email=user.email,
-        affiliation=user.affiliation,
-        channel_number=user.channel_number,
+        # TODO: 마이그레이션 완료 후 활성화
+        affiliation=getattr(user, 'affiliation', None),
+        channel_number=getattr(user, 'channel_number', None),
     )
 
 
@@ -152,6 +154,7 @@ async def service_admin_add_user(data: AdminUserAddRequest) -> UserSignupRespons
     # 채널 번호 중복(정적 할당) 체크: 사용자 테이블 기준
     if data.channel_number < 1 or data.channel_number > 15:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="채널번호는 1-15 범위여야 합니다.")
+    # TODO: 마이그레이션 완료 후 활성화
     if await User.filter(channel_number=data.channel_number).exists():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="이미 사용 중인 채널번호입니다.")
 
@@ -160,7 +163,8 @@ async def service_admin_add_user(data: AdminUserAddRequest) -> UserSignupRespons
         username=data.username,
         password=hashed_password,
         full_name=data.full_name,
-        email=f"{data.username}@example.local",  # 이메일 제공되지 않으므로 임시 지정
+        email=f"{data.username}@example.local",  # 임시 이메일 (나중에 제거 예정)
+        # TODO: 마이그레이션 완료 후 활성화
         affiliation=data.affiliation,
         channel_number=data.channel_number,
     )
@@ -169,8 +173,9 @@ async def service_admin_add_user(data: AdminUserAddRequest) -> UserSignupRespons
         username=user.username,
         full_name=user.full_name,
         email=user.email,
-        affiliation=user.affiliation,
-        channel_number=user.channel_number,
+        # TODO: 마이그레이션 완료 후 활성화
+        affiliation=getattr(user, 'affiliation', None),
+        channel_number=getattr(user, 'channel_number', None),
     )
 
 
@@ -212,8 +217,28 @@ async def service_admin_list_streamers() -> StreamerListResponse:
         StreamerListItem(
             username=u.username,
             full_name=u.full_name,
-            affiliation=u.affiliation,
-            channel_number=u.channel_number,
+            # TODO: 마이그레이션 완료 후 활성화
+            affiliation=getattr(u, 'affiliation', None),
+            channel_number=getattr(u, 'channel_number', None),
         ) for u in users
     ]
     return StreamerListResponse(items=items)
+
+
+# 관리자: 모든 사용자 목록 조회 (관리자 + 스트리머)
+async def service_admin_list_all_users() -> UserListResponse:
+    users = await User.all().order_by("created_at")
+    items = [
+        UserListItem(
+            id=u.id,
+            username=u.username,
+            full_name=u.full_name,
+            email=u.email,
+            role=u.role.value if hasattr(u.role, 'value') else str(u.role),
+            # TODO: 마이그레이션 완료 후 활성화
+            affiliation=getattr(u, 'affiliation', None),
+            channel_number=getattr(u, 'channel_number', None),
+            created_at=u.created_at.isoformat() if u.created_at else None,
+        ) for u in users
+    ]
+    return UserListResponse(items=items, total_count=len(items))

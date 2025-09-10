@@ -46,3 +46,19 @@ class StreamerListItem(BaseModel):
 
 class StreamerListResponse(BaseModel):
     items: list[StreamerListItem]
+
+
+class UserListItem(BaseModel):
+    id: int
+    username: str
+    full_name: str
+    email: str
+    role: str
+    affiliation: str | None = None
+    channel_number: int | None = None
+    created_at: str | None = None
+
+
+class UserListResponse(BaseModel):
+    items: list[UserListItem]
+    total_count: int

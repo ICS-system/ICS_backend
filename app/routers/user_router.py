@@ -17,7 +17,7 @@ from app.dtos.user.user_password_reset_response import (
 )
 from app.dtos.user.user_profile_update_request import UserProfileUpdateRequest
 from app.dtos.user.user_signup_request import UserSignupRequest
-from app.dtos.user.user_signup_response import UserGetResponse, UserSignupResponse, StreamerListItem, StreamerListResponse
+from app.dtos.user.user_signup_response import UserGetResponse, UserSignupResponse, StreamerListItem, StreamerListResponse, UserListItem, UserListResponse
 from app.dtos.user.admin_user_add_request import AdminUserAddRequest
 from app.dtos.user.admin_user_update_channel_request import AdminUserUpdateRequest
 from app.models.user_model import User
@@ -33,6 +33,7 @@ from app.services.user_service import (
     service_admin_delete_user,
     service_admin_update_user,
     service_admin_list_streamers,
+    service_admin_list_all_users,
 )
 
 router = APIRouter(tags=["User"], redirect_slashes=False)
@@ -52,6 +53,12 @@ async def get_current_user_me(current_user: User = Depends(get_current_user)) ->
     """
 
     return UserGetResponse.model_validate(current_user)
+
+
+# Admin: 모든 사용자 목록 조회 (관리자 + 스트리머) - /{user_id}보다 먼저 정의
+@router.get("/all", response_model=UserListResponse, tags=["Admin"], dependencies=[Depends(require_admin)])
+async def admin_list_all_users() -> UserListResponse:
+    return await service_admin_list_all_users()
 
 
 @router.get("/{user_id}", response_model=UserGetResponse)
@@ -139,3 +146,5 @@ async def admin_update_user(username: str, data: AdminUserUpdateRequest) -> dict
 @router.get("/streamers", response_model=StreamerListResponse, tags=["Admin"], dependencies=[Depends(require_admin)])
 async def admin_list_streamers() -> StreamerListResponse:
     return await service_admin_list_streamers()
+
+

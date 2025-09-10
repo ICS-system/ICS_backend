@@ -54,8 +54,8 @@ async def service_signup_user(data: UserSignupRequest) -> UserSignupResponse:
         username=user.username,
         full_name=user.full_name,
         email=user.email,
-        affiliation=getattr(user, 'affiliation', None),
-        channel_number=getattr(user, 'channel_number', None),
+        affiliation=user.affiliation,
+        channel_number=user.channel_number,
     )
 
 
@@ -69,8 +69,8 @@ async def service_get_user(user_id: int) -> UserGetResponse:
         username=user.username,
         full_name=user.full_name,
         email=user.email,
-        affiliation=getattr(user, 'affiliation', None),
-        channel_number=getattr(user, 'channel_number', None),
+        affiliation=user.affiliation,
+        channel_number=user.channel_number,
     )
 
 
@@ -169,8 +169,8 @@ async def service_admin_add_user(data: AdminUserAddRequest) -> UserSignupRespons
         username=user.username,
         full_name=user.full_name,
         email=user.email,
-        affiliation=getattr(user, 'affiliation', None),
-        channel_number=getattr(user, 'channel_number', None),
+        affiliation=user.affiliation,
+        channel_number=user.channel_number,
     )
 
 

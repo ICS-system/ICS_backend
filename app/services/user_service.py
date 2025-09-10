@@ -54,7 +54,6 @@ async def service_signup_user(data: UserSignupRequest) -> UserSignupResponse:
         username=user.username,
         full_name=user.full_name,
         email=user.email,
-        # TODO: 마이그레이션 완료 후 활성화
         affiliation=getattr(user, 'affiliation', None),
         channel_number=getattr(user, 'channel_number', None),
     )

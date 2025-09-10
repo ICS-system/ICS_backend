@@ -96,6 +96,11 @@ async def authenticate_user(username: str, password: str) -> Optional[User]:
         return None
     if not pwd_context.verify(password, user.password):
         return None
+    
+    # 안전한 필드 접근을 위해 getattr 사용
+    user.affiliation = getattr(user, 'affiliation', None)
+    user.channel_number = getattr(user, 'channel_number', None)
+    
     return user
 
 

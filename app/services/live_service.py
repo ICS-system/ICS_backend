@@ -74,6 +74,12 @@ async def service_start_stream(user_id: int, data: LiveStreamCreateRequest):
 
                             janus_room_id = 1002
                             print(f"할당된 채널: {channel_number}, room_id: {janus_room_id}")
+                            
+                            # Janus room 생성 확인/생성
+                            from app.services.janus_service import JanusService
+                            janus_service = JanusService()
+                            room_result = await janus_service.create_videoroom(janus_room_id, "경찰 조직 스트리밍 룸")
+                            print(f"Room 생성 결과: {room_result}")
 
                             # 유니크 제약 조건 회피
                             existing_channel = await LiveModel.filter(channel_number=channel_number, is_active=True).first()

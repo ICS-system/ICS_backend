@@ -59,9 +59,9 @@ async def service_start_stream(user_id: int, data: LiveStreamCreateRequest):
                             print(f"[{user_id}] 사용 중인 채널: {used_set}")
 
 
-                            # 사용 가능한 채널
+                            # 사용 가능한 채널 (1~15만 할당, 16번은 신고자 전용)
                             channel_number = None
-                            for i in range(1, 17):
+                            for i in range(1, 16):
                                 if i not in used_set:
                                     channel_number = i
                                     break
@@ -69,7 +69,7 @@ async def service_start_stream(user_id: int, data: LiveStreamCreateRequest):
                             if not channel_number:
                                 raise HTTPException(
                                     status_code=status.HTTP_400_BAD_REQUEST,
-                                    detail="모든 채널이 사용 중 입니다."
+                                    detail="모든 스트리머 채널(1~15)이 사용 중 입니다."
                                 )
 
                             janus_room_id = 1002

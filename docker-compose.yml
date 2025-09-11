@@ -1,11 +1,21 @@
-version: '3.8'
+# 서버용 설정
+# version: '3.8'
 
 services:
   janus:
     image: canyan/janus-gateway:latest
     network_mode: host
-    volumes:
-      - /home/ubuntu/janus-config:/usr/local/etc/janus
-      - /home/ubuntu/janus-certs:/usr/local/share/janus/certs
+    # 서버용 설정
+    # volumes:
+    #   - /home/ubuntu/janus-config:/usr/local/etc/janus
+    #   - /home/ubuntu/janus-certs:/usr/local/share/janus/certs
+    # 로컬 개발용 포트 설정
+    ports:
+      - "8188:8188"
+      - "8088:8088"
+      - "8089:8089"
+      - "80:8188"  # 프론트엔드가 localhost/janus로 접근할 수 있도록
     container_name: janus
     restart: unless-stopped
+    # 로컬 개발용 기본 설정으로 실행
+    command: ["janus", "--debug-level=4"]

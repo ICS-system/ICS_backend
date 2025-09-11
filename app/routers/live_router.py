@@ -22,7 +22,7 @@ from app.services.live_service import (
     service_get_stream_by_channel,
 )
 
-router = APIRouter(prefix="/live", tags=["live"], redirect_slashes=False)
+router = APIRouter(prefix="/v1/live", tags=["live"], redirect_slashes=False)
 
 
 @router.post("/streams", response_model=StreamStartResponse, dependencies=[Depends(require_streamer)])

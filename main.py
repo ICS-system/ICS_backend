@@ -56,5 +56,5 @@ register_tortoise(
 from app.routers.user_router import router as user_router
 from app.routers.live_router import router as live_router
 
-app.include_router(user_router, prefix="/v1/users")
-app.include_router(live_router, prefix="/v1")
+app.include_router(user_router, prefix="/api/v1/users")
+app.include_router(live_router, prefix="/api")

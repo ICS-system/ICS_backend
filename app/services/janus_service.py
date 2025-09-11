@@ -3,11 +3,11 @@ class JanusService:
         # 서버 환경에 맞게 URL 설정
         import os
         if os.getenv("ENV_FILE") and "prod" in os.getenv("ENV_FILE"):
-            # 프로덕션 환경 - hanswell.app 서버에서 Janus 접근 (HTTPS 사용)
-            self.admin_url = "https://hanswell.app:8088/janus/admin"
+            # 프로덕션 환경 - hanswell.app 관리자 대시보드에 접근
+            self.admin_url = "https://hanswell.app/dashboard"
         else:
-            # 로컬 개발 환경
-            self.admin_url = "http://localhost:8088/janus/admin"
+            # 로컬 개발 환경 - localhost 관리자 대시보드에 접근
+            self.admin_url = "http://localhost:5173/dashboard"
     
     async def create_videoroom(self, room_id: int, description: str) -> dict[int, str]:
         """Videoroom 생성 (Admin API 사용)"""

@@ -13,7 +13,7 @@ class JanusService:
         """Videoroom 생성 (Admin API 사용)"""
         import requests
         
-        # Room 생성
+        # Room 생성 (permanent=true로 재시작 후에도 유지)
         room_data = {
             "janus": "message_plugin",
             "plugin": "janus.plugin.videoroom",
@@ -21,7 +21,8 @@ class JanusService:
             "room": room_id,
             "description": description,
             "publishers": 16,  # 최대 16명 (채널 1~16)
-            "is_private": False
+            "is_private": False,
+            "permanent": True  # 재시작 후에도 방 유지
         }
         
         try:
@@ -32,6 +33,10 @@ class JanusService:
             
             if response.status_code == 200:
                 return {"room_id": room_id, "status": "created"}
+            elif "already exists" in response.text.lower():
+                # 방이 이미 존재하는 경우
+                print(f"Room {room_id} 이미 존재함")
+                return {"room_id": room_id, "status": "exists"}
             else:
                 return {"room_id": room_id, "status": "error", "message": response.text}
                 

@@ -139,7 +139,9 @@ async def get_channel_assignments(
                 "username": user.username,
                 "full_name": user.full_name,
                 "email": user.email,
-                "department": user.affiliation
+                "affiliation": user.affiliation,
+                "channel_number": user.channel_number,
+                "is_channel_assigned": user.is_channel_assigned
             } if user else None,
             "is_reporter_channel": False
         }

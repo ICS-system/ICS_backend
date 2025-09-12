@@ -53,7 +53,7 @@ class StreamStartResponse(BaseModel):
     """스트림 시작 응답"""
     success: bool
     message: str
-    stream: LiveStreamListResponse
+    stream: LiveStreamResponse
 
 
 class StreamStopResponse(BaseModel):

@@ -77,7 +77,7 @@ async def list_streams(
         # 전체 스트림 조회 (새 서비스 함수 필요)
         return await service_get_all_streams(limit, offset)
 
-@router.post("/start")
+@router.post("/start", response_model=StreamStartResponse)
 async def router_start_stream(
         data: LiveStreamCreateRequest,
         current_user: User = Depends(require_streamer),
@@ -85,7 +85,7 @@ async def router_start_stream(
     """라이브 스트림 시작"""
     return await service_start_stream(current_user.id, data)
 
-@router.post("/stop")
+@router.post("/stop", response_model=StreamStopResponse)
 async def router_stop_stream(
         current_user: User = Depends(require_streamer),
 ):

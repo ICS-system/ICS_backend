@@ -61,4 +61,13 @@ from app.routers.admin_router import router as admin_router
 
 app.include_router(user_router, prefix="/api/v1/users")
 app.include_router(live_router, prefix="/api/v1/live")
-app.include_router(admin_router, prefix="/api")  # 프론트엔드 요청 경로에 맞게
+# app.include_router(admin_router, prefix="/api")  # 프론트엔드 요청 경로에 맞게
+
+# 디버깅용: 등록된 라우트 확인
+@app.get("/debug/routes")
+async def debug_routes():
+    routes = []
+    for route in app.routes:
+        if hasattr(route, 'path') and hasattr(route, 'methods'):
+            routes.append(f"{list(route.methods)} {route.path}")
+    return {"routes": routes}

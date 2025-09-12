@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from typing import Optional
+from datetime import datetime, timedelta
 
 from app.core.auth import get_current_user, require_admin, require_streamer, require_any_user
 from app.dtos.live.live_request import (
@@ -114,3 +115,109 @@ async def router_get_streams_by_category(category: str) -> LiveStreamListRespons
 async def router_get_stream_by_channel(channel_number: int) -> LiveStreamResponse:
     """채널명 스트림 조회 - 관리자가 특정 채널 클릭 시 개별 조회"""
     return await service_get_stream_by_channel(channel_number)
+
+
+# ========== 채널번호 할당 API ==========
+@router.get("/management/channels", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def get_channel_assignments(
+    current_user: User = Depends(get_current_user)
+):
+    """채널번호 할당 현황 조회"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="관리자만 접근 가능")
+    
+    # 채널번호 1-15 할당 현황
+    channel_assignments = {}
+    for channel_num in range(1, 16):
+        user = await User.filter(channel_number=channel_num).first()
+        channel_assignments[channel_num] = {
+            "channel_number": channel_num,
+            "assigned_user": user.username if user else None,
+            "affiliation": user.affiliation if user else None,
+            "is_assigned": user is not None
+        }
+    
+    return channel_assignments
+
+@router.put("/management/channels/{user_id}/assign", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def assign_channel(
+    user_id: int,
+    channel_data: dict,  # 임시로 dict 사용, 나중에 DTO로 변경
+    current_user: User = Depends(get_current_user)
+):
+    """사용자에게 채널번호 할당/변경"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="관리자만 접근 가능")
+    
+    user = await User.get(id=user_id)
+    new_channel = channel_data.get("channel_number")
+    
+    # 채널번호 유효성 검사 (1-15만 허용)
+    if not (1 <= new_channel <= 15):
+        raise HTTPException(
+            status_code=400, 
+            detail="채널번호는 1-15 사이여야 합니다"
+        )
+    
+    # 기존 채널번호 사용자 확인
+    existing_user = await User.filter(channel_number=new_channel).first()
+    if existing_user and existing_user.id != user_id:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"채널번호 {new_channel}는 이미 {existing_user.username}에게 할당되었습니다"
+        )
+    
+    # 채널번호 할당/변경
+    user.channel_number = new_channel
+    user.is_channel_assigned = True
+    await user.save()
+    
+    return {"message": f"{user.username}에게 채널번호 {new_channel}가 할당되었습니다"}
+
+@router.delete("/management/channels/{user_id}/unassign", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def unassign_channel(
+    user_id: int,
+    current_user: User = Depends(get_current_user)
+):
+    """사용자의 채널번호 해제"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="관리자만 접근 가능")
+    
+    user = await User.get(id=user_id)
+    user.channel_number = None
+    user.is_channel_assigned = False
+    await user.save()
+    
+    return {"message": f"{user.username}의 채널번호가 해제되었습니다"}
+
+
+# ========== 신고자 채널 16 관리 ==========
+@router.post("/management/channels/16/token", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def create_reporter_token(
+    token_data: dict,  # 임시로 dict 사용, 나중에 DTO로 변경
+    current_user: User = Depends(get_current_user)
+):
+    """신고자용 유효토큰 생성 (채널 16)"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="관리자만 접근 가능")
+    
+    # 유효시간 설정 (1시간, 3시간 등)
+    valid_hours = token_data.get("valid_hours", 1)
+    expires_at = datetime.now() + timedelta(hours=valid_hours)
+    
+    # 토큰 생성 (임시로 간단한 UUID 사용)
+    import uuid
+    token = str(uuid.uuid4())
+    
+    # TODO: 토큰 정보 저장 (Redis 또는 DB)
+    # await save_reporter_token(token, expires_at)
+    
+    # URL 생성
+    reporter_url = f"https://hanswell.app/reporter/{token}"
+    
+    return {
+        "token": token,
+        "url": reporter_url,
+        "expires_at": expires_at.isoformat(),
+        "valid_hours": valid_hours
+    }

@@ -126,18 +126,33 @@ async def get_channel_assignments(
     if current_user.role != "admin":
         raise HTTPException(status_code=403, detail="관리자만 접근 가능")
     
-    # 채널번호 1-15 할당 현황
-    channel_assignments = {}
+    # 채널번호 1-16 할당 현황 (프론트엔드 요구사항에 맞게)
+    channels = []
+    
+    # 채널 1-15 (일반 사용자 채널)
     for channel_num in range(1, 16):
         user = await User.filter(channel_number=channel_num).first()
-        channel_assignments[channel_num] = {
+        channel_data = {
             "channel_number": channel_num,
-            "assigned_user": user.username if user else None,
-            "affiliation": user.affiliation if user else None,
-            "is_assigned": user is not None
+            "assigned_user": {
+                "id": user.id,
+                "username": user.username,
+                "full_name": user.full_name,
+                "email": user.email,
+                "department": user.affiliation
+            } if user else None,
+            "is_reporter_channel": False
         }
+        channels.append(channel_data)
     
-    return channel_assignments
+    # 채널 16 (신고자 채널)
+    channels.append({
+        "channel_number": 16,
+        "assigned_user": None,
+        "is_reporter_channel": True
+    })
+    
+    return {"channels": channels}
 
 @router.put("/management/channels/{user_id}/assign", tags=["Admin"], dependencies=[Depends(require_admin)])
 async def assign_channel(
@@ -205,12 +220,17 @@ async def create_reporter_token(
     valid_hours = token_data.get("valid_hours", 1)
     expires_at = datetime.now() + timedelta(hours=valid_hours)
     
-    # 토큰 생성 (임시로 간단한 UUID 사용)
-    import uuid
-    token = str(uuid.uuid4())
+    # 보안 토큰 생성 (secrets 사용)
+    from app.services.token_service import token_service
+    token = token_service.generate_secure_token()
     
-    # TODO: 토큰 정보 저장 (Redis 또는 DB)
-    # await save_reporter_token(token, expires_at)
+    # Redis에 토큰 정보 저장
+    await token_service.save_reporter_token(
+        token=token,
+        expires_at=expires_at,
+        valid_hours=valid_hours,
+        created_by=current_user.username
+    )
     
     # URL 생성
     reporter_url = f"https://hanswell.app/reporter/{token}"
@@ -220,4 +240,45 @@ async def create_reporter_token(
         "url": reporter_url,
         "expires_at": expires_at.isoformat(),
         "valid_hours": valid_hours
+    }
+
+@router.get("/report/validate/{token}", tags=["Public"])
+async def validate_reporter_token(token: str):
+    """신고자 토큰 검증"""
+    from app.services.token_service import token_service
+    
+    token_data = await token_service.validate_reporter_token(token)
+    
+    if not token_data:
+        raise HTTPException(status_code=404, detail="유효하지 않은 토큰입니다")
+    
+    if token_data.get("is_used", False):
+        raise HTTPException(status_code=400, detail="이미 사용된 토큰입니다")
+    
+    return {
+        "valid": True,
+        "expires_at": token_data["expires_at"],
+        "valid_hours": token_data["valid_hours"]
+    }
+
+@router.post("/report/access/{token}", tags=["Public"])
+async def access_reporter_channel(token: str):
+    """신고자 채널 접근"""
+    from app.services.token_service import token_service
+    
+    token_data = await token_service.validate_reporter_token(token)
+    
+    if not token_data:
+        raise HTTPException(status_code=404, detail="유효하지 않은 토큰입니다")
+    
+    if token_data.get("is_used", False):
+        raise HTTPException(status_code=400, detail="이미 사용된 토큰입니다")
+    
+    # 토큰 사용 완료 표시
+    await token_service.mark_token_as_used(token)
+    
+    return {
+        "message": "채널 16에 접근이 허용되었습니다",
+        "channel_number": 16,
+        "janus_room_id": 1002
     }

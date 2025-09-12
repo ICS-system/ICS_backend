@@ -136,7 +136,23 @@ async def get_all_users(
         query = query.filter(affiliation=affiliation)
     
     users = await query.order_by('username')
-    return users
+    
+    # 프론트엔드 요구사항에 맞게 응답 형식 변경
+    user_list = []
+    for user in users:
+        user_data = {
+            "id": user.id,
+            "username": user.username,
+            "full_name": user.full_name,
+            "email": user.email,
+            "affiliation": user.affiliation,
+            "role": user.role,
+            "channel_number": user.channel_number,
+            "is_channel_assigned": user.is_channel_assigned
+        }
+        user_list.append(user_data)
+    
+    return {"users": user_list}
 
 @router.put("/management/users/{user_id}", tags=["Admin"], dependencies=[Depends(require_admin)])
 async def update_user(

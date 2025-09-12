@@ -154,6 +154,39 @@ async def get_all_users(
     
     return {"users": user_list}
 
+@router.get("/management/users", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def get_management_users(
+    affiliation: Optional[str] = None,
+    current_user: User = Depends(get_current_user)
+):
+    """사용자 목록 조회"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="관리자만 접근 가능")
+    
+    query = User.all()
+    if affiliation:
+        query = query.filter(affiliation=affiliation)
+    
+    users = await query.order_by('username')
+    
+    
+    user_list = []
+    for user in users:
+        user_data = {
+            "id": user.id,
+            "username": user.username,
+            "full_name": user.full_name,
+            "email": user.email,
+            "affiliation": user.affiliation,
+            "channel_number": user.channel_number,
+            "role": user.role,
+            "created_at": user.created_at.isoformat() if user.created_at else None,
+            "is_channel_assigned": user.is_channel_assigned
+        }
+        user_list.append(user_data)
+    
+    return {"users": user_list}
+
 @router.put("/management/users/{user_id}", tags=["Admin"], dependencies=[Depends(require_admin)])
 async def update_user(
     user_id: int,

@@ -19,6 +19,7 @@ class User(BaseModel, models.Model):  # type: ignore
     # 관리자 생성용 추가 필드
     affiliation = fields.CharField(max_length=100, null=True, description="소속")
     channel_number = fields.IntField(null=True, description="정적 할당된 채널 번호")
+    is_channel_assigned = fields.BooleanField(default=False, description="채널 할당 여부")
 
     @classmethod
     async def get_one_by_id(cls, user_id: int) -> "User":

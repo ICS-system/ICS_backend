@@ -156,44 +156,6 @@ async def get_channel_assignments(
     
     return {"channels": channels}
 
-@router.get("/management/channels", tags=["Admin"], dependencies=[Depends(require_admin)])
-async def get_channel_assignments_frontend(
-    current_user: User = Depends(get_current_user)
-):
-    """프론트엔드 요청 경로에 맞는 채널번호 할당 현황 조회"""
-    if current_user.role != "admin":
-        raise HTTPException(status_code=403, detail="관리자만 접근 가능")
-    
-    # 채널번호 1-16 할당 현황 (프론트엔드 요구사항에 맞게)
-    channels = []
-    
-    # 채널 1-15 (일반 사용자 채널)
-    for channel_num in range(1, 16):
-        user = await User.filter(channel_number=channel_num).first()
-        channel_data = {
-            "channel_number": channel_num,
-            "assigned_user": {
-                "id": user.id,
-                "username": user.username,
-                "full_name": user.full_name,
-                "email": user.email,
-                "department": user.affiliation,  # 프론트엔드 요구사항에 맞게 department로 변경
-                "channel_number": user.channel_number,
-                "is_channel_assigned": user.is_channel_assigned
-            } if user else None,
-            "is_reporter_channel": False
-        }
-        channels.append(channel_data)
-    
-    # 채널 16 (신고자 채널)
-    channels.append({
-        "channel_number": 16,
-        "assigned_user": None,
-        "is_reporter_channel": True
-    })
-    
-    return {"channels": channels}
-
 @router.put("/management/channels/{user_id}/assign", tags=["Admin"], dependencies=[Depends(require_admin)])
 async def assign_channel(
     user_id: int,

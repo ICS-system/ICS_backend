@@ -63,4 +63,10 @@ app.include_router(live_router, prefix="/api")
 
 # 프론트엔드 요청 경로에 맞는 별도 라우터 등록
 from app.routers.live_router import router as management_router
+from app.routers.user_router import router as user_management_router
+
+# 채널 관리 API
 app.include_router(management_router, prefix="/api", tags=["Management"])
+
+# 사용자 관리 API  
+app.include_router(user_management_router, prefix="/api", tags=["Management"])

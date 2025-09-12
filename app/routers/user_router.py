@@ -1,4 +1,5 @@
 from string import ascii_lowercase
+from typing import Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
@@ -19,7 +20,6 @@ from app.dtos.user.user_profile_update_request import UserProfileUpdateRequest
 from app.dtos.user.user_signup_request import UserSignupRequest
 from app.dtos.user.user_signup_response import UserGetResponse, UserSignupResponse, StreamerListItem, StreamerListResponse, UserListItem, UserListResponse
 from app.dtos.user.admin_user_add_request import AdminUserAddRequest
-from app.dtos.user.admin_user_update_channel_request import AdminUserUpdateRequest
 from app.models.user_model import User
 from app.services.user_service import (
     authenticate_user,
@@ -30,8 +30,6 @@ from app.services.user_service import (
     service_signup_user,
     service_update_profile,
     service_admin_add_user,
-    service_admin_delete_user,
-    service_admin_update_user,
     service_admin_list_streamers,
     service_admin_list_all_users,
 )
@@ -115,36 +113,80 @@ async def update_profile(
     return await service_update_profile(current_user.id, data)
 
 
-@router.put("/{username}/set-admin", tags=["Admin"], dependencies=[Depends(require_admin)])
-async def set_user_as_admin(username: str):
-    """
-    개발/테스트용: 특정 사용자의 역할을 'admin'으로 설정.
-    """
-    db_user = await User.get_or_none(username=username)
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-    db_user.role = "admin"
-    await db_user.save()
-
-    return {"message": f"User {username} is now an admin. New role: {db_user.role}"}
-
-
-# Admin: 사용자 삭제
-@router.delete("/{username}", tags=["Admin"], dependencies=[Depends(require_admin)])
-async def admin_delete_user(username: str) -> dict[str, str]:
-    return await service_admin_delete_user(username)
-
-
-# Admin: 사용자 정보 변경 (이름/소속/채널/비밀번호)
-@router.patch("/{username}", tags=["Admin"], dependencies=[Depends(require_admin)])
-async def admin_update_user(username: str, data: AdminUserUpdateRequest) -> dict[str, str]:
-    return await service_admin_update_user(username, data)
 
 
 # Admin: 스트리머 목록 조회 (채널/소속/이름 포함)
 @router.get("/streamers", response_model=StreamerListResponse, tags=["Admin"], dependencies=[Depends(require_admin)])
 async def admin_list_streamers() -> StreamerListResponse:
     return await service_admin_list_streamers()
+
+
+# ========== Admin: 사용자 관리 API ==========
+@router.get("/management/users", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def get_all_users(
+    affiliation: Optional[str] = None,  # 소속별 필터링
+    current_user: User = Depends(get_current_user)
+):
+    """모든 사용자 목록 조회 (소속별 필터링 가능)"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="관리자만 접근 가능")
+    
+    query = User.all()
+    if affiliation:
+        query = query.filter(affiliation=affiliation)
+    
+    users = await query.order_by('username')
+    return users
+
+@router.put("/management/users/{user_id}", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def update_user(
+    user_id: int,
+    user_data: dict,  # 임시로 dict 사용, 나중에 DTO로 변경
+    current_user: User = Depends(get_current_user)
+):
+    """사용자 정보 수정 (이름, 비밀번호, 소속 등)"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="관리자만 접근 가능")
+    
+    user = await User.get(id=user_id)
+    
+    # 사용자 정보 업데이트
+    if "full_name" in user_data:
+        user.full_name = user_data["full_name"]
+    if "affiliation" in user_data:
+        user.affiliation = user_data["affiliation"]
+    if "email" in user_data:
+        user.email = user_data["email"]
+    
+    await user.save()
+    return {"message": "사용자 정보가 수정되었습니다"}
+
+@router.delete("/management/users/{user_id}", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def delete_user(
+    user_id: int,
+    current_user: User = Depends(get_current_user)
+):
+    """사용자 삭제"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="관리자만 접근 가능")
+    
+    user = await User.get(id=user_id)
+    await user.delete()
+    return {"message": "사용자가 삭제되었습니다"}
+
+@router.put("/management/users/{user_id}/set-admin", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def set_user_as_admin(
+    user_id: int,
+    current_user: User = Depends(get_current_user)
+):
+    """사용자를 관리자로 설정"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="관리자만 접근 가능")
+    
+    user = await User.get(id=user_id)
+    user.role = "admin"
+    await user.save()
+    
+    return {"message": f"{user.username}이 관리자로 설정되었습니다"}
 
 

@@ -105,19 +105,14 @@ async def service_start_stream(user_id: int, data: LiveStreamCreateRequest):
 
                             print(f"[{user_id}] 스트림 생성 완료 - 채널 {channel_number}")
 
-                        return {
-                            "success": True,
-                            "message": f"채널 {channel_number}에서 스트림이 시작되었습니다.",
-                            "stream": {
-                                "channel_number": live_stream.channel_number,
-                                "janus_room_id": live_stream.janus_room_id,
-                                "stream_title": live_stream.stream_title,
-                                "stream_description": live_stream.stream_description,
-                                "stream_category": live_stream.stream_category,
-                                "tags": live_stream.tags,
-                                "is_public": live_stream.is_public,
-                            }
-                        }
+                        # LiveStreamResponse 모델로 변환
+                        stream_response = LiveStreamResponse.model_validate(live_stream)
+                        
+                        return StreamStartResponse(
+                            success=True,
+                            message=f"채널 {channel_number}에서 스트림이 시작되었습니다.",
+                            stream=stream_response
+                        )
 
                 except IntegrityError as e:
                     if "Duplicate entry" in str(e) and attempt < max_retries - 1:

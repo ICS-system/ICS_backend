@@ -28,7 +28,7 @@ async def get_channel_assignments(
                 "email": user.email,
                 "affiliation": user.affiliation,
                 "channel_number": user.channel_number,
-                "is_channel_assigned": user.is_channel_assigned
+                "is_channel_assigned": user.is_channel_assigned  # 관리자가 명시적으로 할당한 상태
             } if user else None,
             "is_reporter_channel": False
         }
@@ -121,7 +121,7 @@ async def get_management_users(
             "channel_number": user.channel_number,
             "role": user.role,
             "created_at": user.created_at.isoformat() if user.created_at else None,
-            "is_channel_assigned": user.is_channel_assigned
+            "is_channel_assigned": user.is_channel_assigned  # 관리자가 명시적으로 할당한 상태
         }
         user_list.append(user_data)
     

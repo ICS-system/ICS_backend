@@ -38,6 +38,8 @@ app.add_middleware(
         "http://192.168.0.151:5173",
         "http://localhost:5173",
         "http://3.34.75.129",
+        "https://hanswell.app",
+        "http://hanswell.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],

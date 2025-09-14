@@ -146,7 +146,11 @@ async def service_stop_stream(user_id: int):
             live_stream = await LiveModel.filter(user_id=user_id, is_active=True).first()
 
             if not live_stream:
-                return {"success": False, "message": "활성 스트림이 없습니다."}
+                return StreamStopResponse(
+                    success=False,
+                    message="활성 스트림이 없습니다.",
+                    duration=0
+                )
 
             # 스트림 종료
             live_stream.is_active = False
@@ -163,7 +167,11 @@ async def service_stop_stream(user_id: int):
 
     except Exception as e:
         print(f"Stop 에러: {e}")
-        return {"success": False, "message": f"종료 실패: {str(e)}"}
+        return StreamStopResponse(
+            success=False,
+            message=f"종료 실패: {str(e)}",
+            duration=0
+        )
 
 
 async def get_available_room_id() -> int:

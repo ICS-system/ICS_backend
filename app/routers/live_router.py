@@ -193,3 +193,41 @@ async def access_reporter_channel(token: str):
         "channel_number": 16,
         "janus_room_id": 1002
     }
+
+# ========== 채널번호 할당 API ==========
+@router.get("/management/channels", tags=["Admin"], dependencies=[Depends(require_admin)])
+async def get_channel_assignments(
+    current_user: User = Depends(get_current_user)
+):
+    """채널번호 할당 현황 조회"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="관리자만 접근 가능")
+
+    channels = []
+
+    # 채널 1-15 (일반 사용자 채널)
+    for channel_num in range(1, 16):
+        user = await User.filter(channel_number=channel_num).first()
+        channel_data = {
+            "channel_number": channel_num,
+            "assigned_user": {
+                "id": user.id,
+                "username": user.username,
+                "full_name": user.full_name,
+                "email": user.email,
+                "affiliation": user.affiliation,
+                "channel_number": user.channel_number,
+                "is_channel_assigned": user.is_channel_assigned
+            } if user else None,
+            "is_reporter_channel": False
+        }
+        channels.append(channel_data)
+
+    # 채널 16 (신고자 채널)
+    channels.append({
+        "channel_number": 16,
+        "assigned_user": None,
+        "is_reporter_channel": True
+    })
+
+    return {"channels": channels}

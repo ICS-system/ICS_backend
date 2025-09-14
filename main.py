@@ -59,19 +59,9 @@ from app.routers.user_router import router as user_router
 from app.routers.live_router import router as live_router
 from app.routers.admin_router import router as admin_router
 
-print("라우터 import 완료")
-print(f"user_router: {user_router}")
-print(f"live_router: {live_router}")
-print(f"admin_router: {admin_router}")
-
 app.include_router(user_router, prefix="/api/v1/users")
-print("user_router 등록 완료")
-
 app.include_router(live_router, prefix="/api/v1/live")
-print("live_router 등록 완료")
-
 app.include_router(admin_router, prefix="/api")
-print("admin_router 등록 완료")
 
 # 디버깅용: 등록된 라우트 확인
 @app.get("/debug/routes")

@@ -13,6 +13,22 @@ class JanusService:
         """Videoroom 생성 (Admin API 사용)"""
         import requests
         
+        # 먼저 방이 이미 존재하는지 확인
+        try:
+            list_response = requests.post(self.admin_url, json={
+                "janus": "message_plugin",
+                "plugin": "janus.plugin.videoroom",
+                "request": "list"
+            })
+            
+            if list_response.status_code == 200 and str(room_id) in list_response.text:
+                print(f"Room {room_id} 이미 존재함 - 생성 건너뛰기")
+                return {"room_id": room_id, "status": "exists"}
+                
+        except Exception as e:
+            print(f"Room 목록 확인 오류: {e}")
+            # 목록 확인 실패해도 계속 진행
+        
         # Room 생성 (permanent=true로 재시작 후에도 유지)
         import uuid
         transaction_id = str(uuid.uuid4())
@@ -38,14 +54,14 @@ class JanusService:
             if response.status_code == 200:
                 # 응답 내용 확인
                 if "error" in response.text.lower():
-                    print(f"Janus 오류 발생하지만 방은 생성됨: {response.text}")
-                    return {"room_id": room_id, "status": "created_with_error", "message": response.text}
+                    if "already exists" in response.text.lower():
+                        print(f"Room {room_id} 이미 존재함")
+                        return {"room_id": room_id, "status": "exists"}
+                    else:
+                        print(f"Janus 오류 발생하지만 방은 생성됨: {response.text}")
+                        return {"room_id": room_id, "status": "created_with_error", "message": response.text}
                 else:
                     return {"room_id": room_id, "status": "created"}
-            elif "already exists" in response.text.lower():
-                # 방이 이미 존재하는 경우
-                print(f"Room {room_id} 이미 존재함")
-                return {"room_id": room_id, "status": "exists"}
             else:
                 return {"room_id": room_id, "status": "error", "message": response.text}
                 

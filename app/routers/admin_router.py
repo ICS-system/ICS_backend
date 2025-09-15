@@ -233,3 +233,39 @@ async def get_unassigned_users(
         }
         user_list.append(user_data)
     return {"users": user_list}
+
+# 프론트엔드 호환성을 위한 추가 API
+@router.post("/users/{user_id}/assign", dependencies=[Depends(require_admin)])
+async def assign_channel_compat(
+    user_id: int,
+    channel_data: dict,
+    current_user: User = Depends(get_current_user)
+):
+    """사용자에게 채널번호 할당 (프론트엔드 호환성용 POST API)"""
+    if current_user.role != "admin":
+        raise HTTPException(status_code=403, detail="관리자만 접근 가능")
+    
+    user = await User.get(id=user_id)
+    new_channel = channel_data.get("channel_number")
+    
+    # 채널번호 유효성 검사 (1-15만 허용)
+    if not (1 <= new_channel <= 15):
+        raise HTTPException(
+            status_code=400, 
+            detail="채널번호는 1-15 사이여야 합니다"
+        )
+    
+    # 기존 채널번호 사용자 확인
+    existing_user = await User.filter(channel_number=new_channel).first()
+    if existing_user and existing_user.id != user_id:
+        raise HTTPException(
+            status_code=400, 
+            detail=f"채널번호 {new_channel}는 이미 {existing_user.username}에게 할당되었습니다"
+        )
+    
+    # 채널번호 할당/변경
+    user.channel_number = new_channel
+    user.is_channel_assigned = True
+    await user.save()
+    
+    return {"message": f"{user.username}에게 채널번호 {new_channel}가 할당되었습니다"}

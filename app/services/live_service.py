@@ -53,23 +53,28 @@ async def service_start_stream(user_id: int, data: LiveStreamCreateRequest):
                         async with in_transaction():
                             print(f"[{user_id}] 최소 트랜잭션 시작")
 
-                            # 사용 중인 채널 확인
-                            used_channels = await LiveModel.filter(is_active=True).values_list("channel_number", flat=True)
-                            used_set = set(used_channels)
-                            print(f"[{user_id}] 사용 중인 채널: {used_set}")
-
-
-                            # 사용 가능한 채널 (1~15만 할당, 16번은 신고자 전용)
-                            channel_number = None
-                            for i in range(1, 16):
-                                if i not in used_set:
-                                    channel_number = i
-                                    break
-
-                            if not channel_number:
+                            # 사용자별 고정 채널 번호 할당
+                            if user.channel_number and 1 <= user.channel_number <= 15:
+                                # 사용자에게 이미 할당된 채널 번호가 있으면 그 채널 사용
+                                channel_number = user.channel_number
+                                print(f"[{user_id}] 사용자 고정 채널: {channel_number}")
+                                
+                                # 해당 채널이 다른 사용자에 의해 사용 중인지 확인
+                                existing_stream = await LiveModel.filter(
+                                    channel_number=channel_number, 
+                                    is_active=True
+                                ).exclude(user_id=user_id).first()
+                                
+                                if existing_stream:
+                                    raise HTTPException(
+                                        status_code=status.HTTP_409_CONFLICT,
+                                        detail=f"채널 {channel_number}이 다른 사용자에 의해 사용 중입니다."
+                                    )
+                            else:
+                                # 사용자에게 할당된 채널이 없으면 오류 발생
                                 raise HTTPException(
                                     status_code=status.HTTP_400_BAD_REQUEST,
-                                    detail="모든 스트리머 채널(1~15)이 사용 중 입니다."
+                                    detail="채널 번호가 할당되지 않았습니다. 관리자에게 문의하세요."
                                 )
 
                             janus_room_id = 1002

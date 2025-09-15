@@ -80,6 +80,10 @@ async def service_start_stream(user_id: int, data: LiveStreamCreateRequest):
                             janus_service = JanusService()
                             room_result = await janus_service.create_videoroom(janus_room_id, "경찰 조직 스트리밍 룸")
                             print(f"Room 생성 결과: {room_result}")
+                            
+                            # Janus 오류가 있어도 스트림 생성은 계속 진행
+                            if room_result.get("status") in ["created_with_error", "error"]:
+                                print(f"Janus Room 생성 오류 무시하고 계속 진행: {room_result.get('message', 'Unknown error')}")
 
                             # 유니크 제약 조건 회피
                             existing_channel = await LiveModel.filter(channel_number=channel_number, is_active=True).first()
@@ -141,29 +145,40 @@ async def service_start_stream(user_id: int, data: LiveStreamCreateRequest):
 
 async def service_stop_stream(user_id: int):
     """라이브 스트림 종료 - 트랜잭션 적용"""
+    print(f"[{user_id}] 스트림 종료 요청 시작")
     try:
-        async with in_transaction():
-            live_stream = await LiveModel.filter(user_id=user_id, is_active=True).first()
+        print(f"[{user_id}] 활성 스트림 검색 중...")
+        live_stream = await LiveModel.filter(user_id=user_id, is_active=True).first()
 
-            if not live_stream:
-                return StreamStopResponse(
-                    success=False,
-                    message="활성 스트림이 없습니다.",
-                    duration=0
-                )
-
-            # 스트림 종료
-            live_stream.is_active = False
-            live_stream.ended_at = datetime.now(timezone.utc)
-            await live_stream.save()
-
-            print(f"[{user_id}] 채널 {live_stream.channel_number} 스트림 종료 완료")
-
+        if not live_stream:
+            print(f"[{user_id}] 활성 스트림 없음")
             return StreamStopResponse(
-                success=True,
-                message="스트림이 종료되었습니다.",
-                duration=live_stream.duration or 0,
+                success=False,
+                message="활성 스트림이 없습니다.",
+                duration=0
             )
+        
+        print(f"[{user_id}] 활성 스트림 발견: 채널 {live_stream.channel_number}")
+
+        # duration 계산
+        ended_at = datetime.now(timezone.utc)
+        duration = 0
+        if live_stream.started_at:
+            duration = int((ended_at - live_stream.started_at).total_seconds())
+
+        # 트랜잭션 없이 직접 업데이트
+        await LiveModel.filter(id=live_stream.id).update(
+            is_active=False,
+            ended_at=ended_at
+        )
+
+        print(f"[{user_id}] 채널 {live_stream.channel_number} 스트림 종료 완료 (duration: {duration}초)")
+
+        return StreamStopResponse(
+            success=True,
+            message="스트림이 종료되었습니다.",
+            duration=duration,
+        )
 
     except Exception as e:
         print(f"Stop 에러: {e}")

@@ -90,7 +90,10 @@ async def router_stop_stream(
         current_user: User = Depends(require_streamer),
 ):
     """라이브 스트림 종료"""
-    return await service_stop_stream(current_user.id)
+    print(f"라우터: 사용자 {current_user.id}({current_user.username}) 스트림 종료 요청")
+    result = await service_stop_stream(current_user.id)
+    print(f"라우터: 스트림 종료 결과: {result}")
+    return result
 
 @router.patch("/update", response_model=StreamUpdateResponse)
 async def router_update_stream(

@@ -36,7 +36,12 @@ class JanusService:
             print(f"Room 생성 응답: {response.text}")
             
             if response.status_code == 200:
-                return {"room_id": room_id, "status": "created"}
+                # 응답 내용 확인
+                if "error" in response.text.lower():
+                    print(f"Janus 오류 발생하지만 방은 생성됨: {response.text}")
+                    return {"room_id": room_id, "status": "created_with_error", "message": response.text}
+                else:
+                    return {"room_id": room_id, "status": "created"}
             elif "already exists" in response.text.lower():
                 # 방이 이미 존재하는 경우
                 print(f"Room {room_id} 이미 존재함")

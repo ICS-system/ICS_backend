@@ -24,6 +24,7 @@ class LiveStreamResponse(BaseModel):
     duration: Optional[int] = None
     created_at: datetime
     modified_at: datetime
+    hls_url: Optional[str] = None  # CCTV HLS 스트림 URL
 
     class Config:
         from_attributes = True

@@ -216,7 +216,7 @@ async def service_get_all_channels() -> AllChannelResponse:
                     duration=None,
                     created_at=datetime.now(timezone.utc).isoformat(),
                     modified_at=datetime.now(timezone.utc).isoformat(),
-                    hls_url="https://192.168.10.150:8080/hls/stream.m3u8"  # CCTV HLS URL (추정)
+                    hls_url="https://hanswell.app/hls/stream.m3u8"  # CCTV HLS URL
                 )
                 
                 channel_info = ChannelInfo(

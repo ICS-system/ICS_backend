@@ -236,7 +236,7 @@ async def service_get_all_channels() -> AllChannelResponse:
                     duration=None,
                     created_at=datetime.now(timezone.utc).isoformat(),
                     modified_at=datetime.now(timezone.utc).isoformat(),
-                    hls_url="http://192.168.10.150:8080/hls/stream.m3u8"  # CCTV HLS URL
+                    hls_url="https://192.168.10.150:8080/hls/stream.m3u8"  # CCTV HLS URL (HTTPS)
                 )
                 
                 channel_info = ChannelInfo(

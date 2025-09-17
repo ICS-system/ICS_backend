@@ -215,11 +215,9 @@ async def service_get_all_channels() -> AllChannelResponse:
                     ended_at=None,
                     duration=None,
                     created_at=datetime.now(timezone.utc).isoformat(),
-                    modified_at=datetime.now(timezone.utc).isoformat()
+                    modified_at=datetime.now(timezone.utc).isoformat(),
+                    hls_url="http://192.168.10.150:8080/hls/stream.m3u8"  # CCTV HLS URL
                 )
-                
-                # CCTV HLS URL 추가
-                cctv_stream_info.hls_url = "http://192.168.10.150:8080/hls/stream.m3u8"
                 
                 channel_info = ChannelInfo(
                     channel_number=15,

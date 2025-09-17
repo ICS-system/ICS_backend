@@ -213,31 +213,63 @@ async def service_get_all_channels() -> AllChannelResponse:
 
         channels = []
         for i in range(1, 17):
-            stream = channel_map.get(i)
+            # 채널 15는 CCTV 카메라로 처리
+            if i == 15:
+                # CCTV 카메라 스트림 정보 생성
+                cctv_stream_info = LiveStreamResponse(
+                    id=999,  # CCTV용 임시 ID
+                    user_id=0,  # CCTV용 임시 사용자 ID
+                    username="CCTV",
+                    full_name="CCTV 카메라",
+                    channel_number=15,
+                    janus_room_id=1002,
+                    stream_category="cctv",
+                    stream_title="CCTV 카메라",
+                    stream_description="CCTV 카메라 스트림 (192.168.10.150)",
+                    tags=["cctv", "security"],
+                    thumbnail_url=None,
+                    is_public=True,
+                    quality_setting="high",
+                    is_active=True,
+                    started_at=datetime.now(timezone.utc).isoformat(),
+                    ended_at=None,
+                    duration=None,
+                    created_at=datetime.now(timezone.utc).isoformat(),
+                    modified_at=datetime.now(timezone.utc).isoformat()
+                )
+                
+                channel_info = ChannelInfo(
+                    channel_number=15,
+                    is_active=True,
+                    stream_info=cctv_stream_info,
+                )
+            else:
+                # 일반 사용자 스트림 처리 (채널 1-14, 16)
+                stream = channel_map.get(i)
 
-            try:
-                if stream:
-                    stream_info = LiveStreamResponse.model_validate(stream)
+                try:
+                    if stream:
+                        stream_info = LiveStreamResponse.model_validate(stream)
 
-                    channel_info = ChannelInfo(
-                        channel_number=i,
-                        is_active=True,
-                        stream_info=stream_info,
-                    )
-                else:
+                        channel_info = ChannelInfo(
+                            channel_number=i,
+                            is_active=True,
+                            stream_info=stream_info,
+                        )
+                    else:
+                        channel_info = ChannelInfo(
+                            channel_number=i,
+                            is_active=False,
+                            stream_info=None,
+                        )
+
+                except Exception as e:
+                    print(f"채널 {i} 처리 중 오류: {e}")
                     channel_info = ChannelInfo(
                         channel_number=i,
                         is_active=False,
                         stream_info=None,
                     )
-
-            except Exception as e:
-                print(f"채널 {i} 처리 중 오류: {e}")
-                channel_info = ChannelInfo(
-                    channel_number=i,
-                    is_active=False,
-                    stream_info=None,
-                )
 
             channels.append(channel_info)
 

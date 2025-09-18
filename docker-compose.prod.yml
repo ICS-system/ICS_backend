@@ -11,3 +11,6 @@ services:
       - /home/ubuntu/janus-certs:/usr/local/share/janus/certs
     container_name: janus
     restart: unless-stopped
+    environment:
+      - JANUS_STUN_SERVER=stun.l.google.com
+      - JANUS_NAT_1_1=3.34.75.129

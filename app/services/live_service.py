@@ -79,10 +79,14 @@ async def service_start_stream(user_id: int, data: LiveStreamCreateRequest):
                             from app.services.janus_service import JanusService
                             janus_service = JanusService()
                             room_result = await janus_service.create_videoroom(janus_room_id, "경찰 조직 스트리밍 룸")
-                            print(f"Room 생성 결과: {room_result}")
                             
-                            # Room 상태 확인 (created 또는 exists 모두 정상)
-                            if room_result.get("status") not in ["created", "exists"]:
+                            # Room 상태에 따른 로깅
+                            room_status = room_result.get("status")
+                            if room_status == "created":
+                                print(f"[Janus] Room {janus_room_id} created")
+                            elif room_status == "exists":
+                                print(f"[Janus] Room {janus_room_id} already exists — reuse")
+                            else:
                                 print(f"Room 생성 실패: {room_result}")
                                 raise HTTPException(
                                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -111,7 +115,7 @@ async def service_start_stream(user_id: int, data: LiveStreamCreateRequest):
                                 quality_setting=data.quality_setting,
                             )
 
-                            print(f"[{user_id}] 스트림 생성 완료 - 채널 {channel_number}")
+                            print(f"[start] 채널 {channel_number} 준비 완료 (room {janus_room_id}, status={room_status})")
 
                         # LiveStreamResponse 모델로 변환
                         stream_response = LiveStreamResponse.model_validate(live_stream)
@@ -154,9 +158,10 @@ async def service_stop_stream(user_id: int):
             live_stream = await LiveModel.filter(user_id=user_id, is_active=True).first()
 
             if not live_stream:
+                print(f"[stop] 사용자 {user_id} 활성 스트림 없음 — no-op")
                 return StreamStopResponse(
-                    success=False,
-                    message="활성 스트림이 없습니다.",
+                    success=True,
+                    message="활성 스트림 없음(이미 정지 상태)",
                     duration=0
                 )
 

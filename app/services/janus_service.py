@@ -37,9 +37,9 @@ class JanusService:
             
             if response.status_code == 200:
                 return {"room_id": room_id, "status": "created"}
-            elif "already exists" in response.text.lower() or "error_code" in response.text and "427" in response.text:
+            elif "already exists" in response.text.lower() or ("error_code" in response.text and "427" in response.text):
                 # 방이 이미 존재하는 경우 (427 오류 포함)
-                print(f"Room {room_id} 이미 존재함 (427 오류)")
+                print(f"[Janus] Room {room_id} already exists — reuse")
                 return {"room_id": room_id, "status": "exists"}
             else:
                 return {"room_id": room_id, "status": "error", "message": response.text}

@@ -37,7 +37,7 @@ class LiveModel(BaseModel, models.Model):  # type: ignore
             ("started_at",)
         ]
         ordering = ["-started_at"]
-        unique_together = ("user", "is_active")
+        unique_together = [("user", "is_active")]
 
     def __str__(self) -> str:
         return f"Live(id={self.id}, user={self.username}, channel={self.channel_number})"

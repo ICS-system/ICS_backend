@@ -1,4 +1,5 @@
 import os
+import logging
 
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, status
@@ -14,6 +15,19 @@ load_dotenv(dotenv_path="envs/.env.local")
 DB_URL = os.getenv("DB_URL")
 
 app = FastAPI()
+
+# 요청자 디버깅 미들웨어 추가
+logger = logging.getLogger(__name__)
+
+@app.middleware("http")
+async def whoami(request: Request, call_next):
+    user = getattr(request.state, "user", None)
+    if user:
+        logger.info(f"[LIVE/START] by={user.username}")
+    else:
+        logger.debug("[LIVE/START] anonymous or user not set")
+    response = await call_next(request)
+    return response
 
 # 로그인 이후 프로필 정보 변경 시 나타나는 422 오류 로그 확인
 @app.exception_handler(RequestValidationError)

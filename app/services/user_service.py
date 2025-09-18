@@ -168,6 +168,7 @@ async def service_admin_add_user(data: AdminUserAddRequest) -> UserSignupRespons
         email=f"{data.username}@example.local",  # 임시 이메일 (나중에 제거 예정)
         affiliation=data.affiliation,
         channel_number=data.channel_number,
+        is_channel_assigned=True,  # 관리자가 생성할 때는 자동으로 할당됨
     )
     return UserSignupResponse(
         user_id=user.id,

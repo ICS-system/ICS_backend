@@ -61,18 +61,10 @@ class JanusService:
             
             if response.status_code == 200:
                 # 응답 내용 확인
-                if "error_code" in response.text and "427" in response.text:
-                    # Janus Admin API의 427 오류 (Room already exists)
-                    print(f"Room {room_id} 이미 존재함 (427 오류)")
-                    return {"room_id": room_id, "status": "exists"}
-                elif "error" in response.text.lower():
-                    print(f"Janus 오류 발생하지만 방은 생성됨: {response.text}")
-                    return {"room_id": room_id, "status": "created_with_error", "message": response.text}
-                else:
-                    return {"room_id": room_id, "status": "created"}
-            elif "already exists" in response.text.lower():
+                return {"room_id": room_id, "status": "created"}
+            elif "already exists" in response.text.lower() or "error_code" in response.text and "427" in response.text:
                 # 방이 이미 존재하는 경우
-                print(f"Room {room_id} 이미 존재함")
+                print(f"Room {room_id} 이미 존재함 (427 오류)")
                 return {"room_id": room_id, "status": "exists"}
             else:
                 return {"room_id": room_id, "status": "error", "message": response.text}

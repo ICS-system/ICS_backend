@@ -86,9 +86,13 @@ async def service_start_stream(user_id: int, data: LiveStreamCreateRequest):
                             room_result = await janus_service.create_videoroom(janus_room_id, "경찰 조직 스트리밍 룸")
                             print(f"Room 생성 결과: {room_result}")
                             
-                            # Janus 오류가 있어도 스트림 생성은 계속 진행
-                            if room_result.get("status") in ["created_with_error", "error"]:
-                                print(f"Janus Room 생성 오류 무시하고 계속 진행: {room_result.get('message', 'Unknown error')}")
+                            # Room 상태 확인 (created 또는 exists 모두 정상)
+                            if room_result.get("status") not in ["created", "exists"]:
+                                print(f"Room 생성 실패: {room_result}")
+                                raise HTTPException(
+                                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                                    detail=f"Janus Room 생성 실패: {room_result.get('message', 'Unknown error')}"
+                                )
 
                             # 유니크 제약 조건 회피
                             existing_channel = await LiveModel.filter(channel_number=channel_number, is_active=True).first()

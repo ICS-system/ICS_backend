@@ -25,6 +25,8 @@ RUN apt-get update && apt-get install -y \
     libavformat-dev \
     libavcodec-dev \
     libavutil-dev \
+    libogg-dev \
+    libopus-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone and build Janus Gateway
@@ -42,7 +44,7 @@ RUN ./configure \
     --disable-rabbitmq \
     --disable-mqtt \
     --enable-websockets \
-    --enable-post-processing
+    --disable-post-processing
 
 RUN make && make install && make configs
 

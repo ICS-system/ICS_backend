@@ -166,8 +166,8 @@ async def service_stop_stream(user_id: int):
             if not live_stream:
                 print(f"[stop] 사용자 {user_id} 활성 스트림 없음 — no-op")
                 return StreamStopResponse(
-                    success=True,
-                    message="활성 스트림 없음(이미 정지 상태)",
+                    success=False,
+                    message="활성 스트림이 없습니다.",
                     duration=0
                 )
 

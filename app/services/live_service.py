@@ -213,7 +213,7 @@ async def service_get_all_channels() -> AllChannelResponse:
 
         channels = []
         for i in range(1, 17):
-            # 채널 15는 CCTV 카메라로 처리
+            # 채널 15는 CCTV 카메라로 처리 (Janus Streaming 플러그인 사용)
             if i == 15:
                 # CCTV 카메라 스트림 정보 생성
                 cctv_stream_info = LiveStreamResponse(
@@ -222,10 +222,10 @@ async def service_get_all_channels() -> AllChannelResponse:
                     username="CCTV",
                     full_name="CCTV 카메라",
                     channel_number=15,
-                    janus_room_id=1002,
+                    janus_room_id=None,  # CCTV는 videoroom 사용 안 함
                     stream_category="cctv",
                     stream_title="CCTV 카메라",
-                    stream_description="CCTV 카메라 스트림 (192.168.10.150)",
+                    stream_description="CCTV 카메라 스트림 (RTMP → RTP → WebRTC)",
                     tags=["cctv", "security"],
                     thumbnail_url=None,
                     is_public=True,
@@ -236,7 +236,7 @@ async def service_get_all_channels() -> AllChannelResponse:
                     duration=None,
                     created_at=datetime.now(timezone.utc).isoformat(),
                     modified_at=datetime.now(timezone.utc).isoformat(),
-                    hls_url="https://hanswell.app/hls/stream.m3u8"  # CCTV HLS URL
+                    hls_url=None  # HLS 대신 Janus Streaming 사용
                 )
                 
                 channel_info = ChannelInfo(

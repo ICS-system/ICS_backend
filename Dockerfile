@@ -54,4 +54,4 @@ EXPOSE 8088 8188 8989
 # NOTE:
 # - root로 실행 (마운트된 config/certs 접근 문제 방지)
 # - shell form CMD 사용 (환경변수 치환 가능)
-CMD /usr/local/bin/janus --nat-1-1=${JANUS_NAT_1_1} --stun-server=${JANUS_STUN_SERVER}
+CMD /usr/local/bin/janus

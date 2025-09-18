@@ -10,7 +10,7 @@ class LiveStreamResponse(BaseModel):
     username: str
     full_name: str
     channel_number: int
-    janus_room_id: int
+    janus_room_id: Optional[int] = None
     stream_category: str
     stream_title: str
     stream_description: Optional[str] = None

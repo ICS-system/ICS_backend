@@ -1,12 +1,13 @@
 # 서버 배포용 Docker Compose 설정
 services:
   janus:
-    image: canyan/janus-gateway:1.3.2
+    build:
+      context: .
+      dockerfile: Dockerfile
     network_mode: host
-    # 서버용 볼륨 마운트
+    # 서버용 볼륨 마운트 (기존과 동일한 경로)
     volumes:
       - /home/ubuntu/janus-config:/usr/local/etc/janus
       - /home/ubuntu/janus-certs:/usr/local/share/janus/certs
     container_name: janus
     restart: unless-stopped
-    # 서버용 설정 (기본 설정 사용)

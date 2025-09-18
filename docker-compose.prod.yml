@@ -1,7 +1,7 @@
 # 서버 배포용 Docker Compose 설정
 services:
   janus:
-    image: canyan/janus-gateway:latest
+    image: canyan/janus-gateway:1.3.2
     network_mode: host
     # 서버용 볼륨 마운트
     volumes:
